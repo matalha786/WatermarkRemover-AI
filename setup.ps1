@@ -156,13 +156,13 @@ if ($verifyResult -ne "OK") {
     }
 }
 
-# Install iopaint separately without pulling its deps (we already have ours)
+# Install iopaint separately without pulling its old pinned deps.
 Write-Host "  [*] Installing iopaint (no deps)..." -ForegroundColor Cyan
+$iopaintArgs = @("-m", "pip", "install", "--upgrade", "iopaint", "--no-deps", "--no-cache-dir")
 if ($CHINA_MODE) {
-    $iopaintProcess = Start-Process -FilePath $PYTHON_EXE -ArgumentList "-m", "pip", "install", "--upgrade", "iopaint", "--no-deps", "--no-cache-dir", "-i", $PIP_INDEX_URL, "--trusted-host", "pypi.tuna.tsinghua.edu.cn" -NoNewWindow -PassThru
-} else {
-    $iopaintProcess = Start-Process -FilePath $PYTHON_EXE -ArgumentList "-m", "pip", "install", "--upgrade", "iopaint", "--no-deps", "--no-cache-dir" -NoNewWindow -PassThru
+    $iopaintArgs += $PIP_EXTRA_ARGS
 }
+$iopaintProcess = Start-Process -FilePath $PYTHON_EXE -ArgumentList $iopaintArgs -NoNewWindow -PassThru
 $iopaintProcess.WaitForExit()
 
 if ($iopaintProcess.ExitCode -ne 0) {
@@ -176,9 +176,9 @@ Write-Host "  [OK] iopaint installed" -ForegroundColor Green
 # Install iopaint's required dependencies manually (subset needed for LaMA inpainting)
 Write-Host "  [*] Installing iopaint dependencies..." -ForegroundColor Cyan
 if ($CHINA_MODE) {
-    $iopaintDepsProcess = Start-Process -FilePath $PYTHON_EXE -ArgumentList "-m", "pip", "install", "pydantic", "typer", "einops", "omegaconf", "easydict", "yacs", "--no-cache-dir", "-i", $PIP_INDEX_URL, "--trusted-host", "pypi.tuna.tsinghua.edu.cn" -NoNewWindow -PassThru
+    $iopaintDepsProcess = Start-Process -FilePath $PYTHON_EXE -ArgumentList "-m", "pip", "install", "--upgrade", "pydantic", "typer", "einops", "omegaconf", "easydict", "yacs", "peft>=0.17.0", "--no-cache-dir", "-i", $PIP_INDEX_URL, "--trusted-host", "pypi.tuna.tsinghua.edu.cn" -NoNewWindow -PassThru
 } else {
-    $iopaintDepsProcess = Start-Process -FilePath $PYTHON_EXE -ArgumentList "-m", "pip", "install", "pydantic", "typer", "einops", "omegaconf", "easydict", "yacs", "--no-cache-dir" -NoNewWindow -PassThru
+    $iopaintDepsProcess = Start-Process -FilePath $PYTHON_EXE -ArgumentList "-m", "pip", "install", "--upgrade", "pydantic", "typer", "einops", "omegaconf", "easydict", "yacs", "peft>=0.17.0", "--no-cache-dir" -NoNewWindow -PassThru
 }
 $iopaintDepsProcess.WaitForExit()
 
@@ -191,14 +191,14 @@ if ($iopaintDepsProcess.ExitCode -ne 0) {
 
 # Verify iopaint dependencies are properly installed
 Write-Host "  [*] Verifying iopaint dependencies..." -ForegroundColor Cyan
-$verifyIopaint = & $PYTHON_EXE -c "import pydantic; import typer; import einops; import omegaconf; import easydict; import yacs; print('OK')" 2>&1
+$verifyIopaint = & $PYTHON_EXE -c "import pydantic; import typer; import einops; import omegaconf; import easydict; import yacs; import peft; print('OK')" 2>&1
 if ($verifyIopaint -ne "OK") {
     Write-Host ""
     Write-Host "  [X] iopaint dependencies verification failed" -ForegroundColor Red
     Write-Host "      Missing modules detected. Attempting reinstall..." -ForegroundColor Yellow
 
     # Try installing one by one to identify issues
-    $deps = @("pydantic", "typer", "einops", "omegaconf", "easydict", "yacs")
+    $deps = @("pydantic", "typer", "einops", "omegaconf", "easydict", "yacs", "peft>=0.17.0")
     foreach ($dep in $deps) {
         if ($CHINA_MODE) {
             & $PYTHON_EXE -m pip install $dep --no-cache-dir -i $PIP_INDEX_URL --trusted-host pypi.tuna.tsinghua.edu.cn 2>&1 | Out-Null
@@ -208,10 +208,10 @@ if ($verifyIopaint -ne "OK") {
     }
 
     # Verify again
-    $verifyAgain = & $PYTHON_EXE -c "import pydantic; import typer; import einops; import omegaconf; import easydict; import yacs; print('OK')" 2>&1
+    $verifyAgain = & $PYTHON_EXE -c "import pydantic; import typer; import einops; import omegaconf; import easydict; import yacs; import peft; print('OK')" 2>&1
     if ($verifyAgain -ne "OK") {
         Write-Host "  [X] Could not install iopaint dependencies" -ForegroundColor Red
-        Write-Host "      Please try running: pip install pydantic typer einops omegaconf easydict yacs" -ForegroundColor Yellow
+        Write-Host "      Please try running: pip install pydantic typer einops omegaconf easydict yacs 'peft>=0.17.0'" -ForegroundColor Yellow
         Read-Host "  Press Enter to exit"
         exit 1
     }

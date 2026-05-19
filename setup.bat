@@ -133,9 +133,9 @@ echo   [OK] iopaint installed
 :: Install iopaint dependencies manually
 echo   [*] Installing iopaint dependencies...
 if "%CHINA_MODE%"=="1" (
-    "%PYTHON_EXE%" -m pip install pydantic typer einops omegaconf easydict yacs --no-cache-dir %PIP_MIRROR%
+    "%PYTHON_EXE%" -m pip install --upgrade pydantic typer einops omegaconf easydict yacs "peft>=0.17.0" --no-cache-dir %PIP_MIRROR%
 ) else (
-    "%PYTHON_EXE%" -m pip install pydantic typer einops omegaconf easydict yacs --no-cache-dir
+    "%PYTHON_EXE%" -m pip install --upgrade pydantic typer einops omegaconf easydict yacs "peft>=0.17.0" --no-cache-dir
 )
 if errorlevel 1 (
     echo   [X] Failed to install iopaint dependencies
@@ -144,7 +144,7 @@ if errorlevel 1 (
 )
 
 :: Verify iopaint dependencies
-"%PYTHON_EXE%" -c "import pydantic; import typer; import einops; import omegaconf; import easydict; import yacs; print('OK')" >nul 2>&1
+"%PYTHON_EXE%" -c "import pydantic; import typer; import einops; import omegaconf; import easydict; import yacs; import peft; print('OK')" >nul 2>&1
 if errorlevel 1 (
     echo   [!] iopaint dependencies verification failed, attempting reinstall...
     if "%CHINA_MODE%"=="1" (
@@ -154,6 +154,7 @@ if errorlevel 1 (
         "%PYTHON_EXE%" -m pip install omegaconf --no-cache-dir --force-reinstall %PIP_MIRROR%
         "%PYTHON_EXE%" -m pip install easydict --no-cache-dir --force-reinstall %PIP_MIRROR%
         "%PYTHON_EXE%" -m pip install yacs --no-cache-dir --force-reinstall %PIP_MIRROR%
+        "%PYTHON_EXE%" -m pip install "peft>=0.17.0" --no-cache-dir --upgrade %PIP_MIRROR%
     ) else (
         "%PYTHON_EXE%" -m pip install pydantic --no-cache-dir --force-reinstall
         "%PYTHON_EXE%" -m pip install typer --no-cache-dir --force-reinstall
@@ -161,12 +162,13 @@ if errorlevel 1 (
         "%PYTHON_EXE%" -m pip install omegaconf --no-cache-dir --force-reinstall
         "%PYTHON_EXE%" -m pip install easydict --no-cache-dir --force-reinstall
         "%PYTHON_EXE%" -m pip install yacs --no-cache-dir --force-reinstall
+        "%PYTHON_EXE%" -m pip install "peft>=0.17.0" --no-cache-dir --upgrade
     )
 
-    "%PYTHON_EXE%" -c "import pydantic; import typer; import einops; import omegaconf; import easydict; import yacs; print('OK')" >nul 2>&1
+    "%PYTHON_EXE%" -c "import pydantic; import typer; import einops; import omegaconf; import easydict; import yacs; import peft; print('OK')" >nul 2>&1
     if errorlevel 1 (
         echo   [X] Could not install iopaint dependencies
-        echo       Please try running: pip install pydantic typer einops omegaconf easydict yacs
+        echo       Please try running: pip install pydantic typer einops omegaconf easydict yacs "peft>=0.17.0"
         pause
         exit /b 1
     )

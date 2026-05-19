@@ -1,0 +1,13 @@
+detection_prompt: watermark text
+detection_skip: 1
+fade_in: 0
+fade_out: 0
+force_format: None
+input_path: C:\Users\Administrator\Downloads\slow-cinematic-camera-push-in-toward-the-empty-cha.mp4
+lang: en
+max_bbox_percent: '10'
+mode: single
+output_path: C:\Users\Administrator\Documents\New folder
+overwrite: false
+theme: korpo
+transparent: false

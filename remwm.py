@@ -11,8 +11,6 @@ if not hasattr(huggingface_hub, 'cached_download'):
     huggingface_hub.cached_download = huggingface_hub.hf_hub_download
 
 from transformers import AutoProcessor, Florence2ForConditionalGeneration
-from iopaint.model_manager import ModelManager
-from iopaint.schema import HDStrategy, LDMSampler, InpaintRequest as Config
 import torch
 from torch.nn import Module
 import tqdm
@@ -22,11 +20,51 @@ import os
 import tempfile
 import shutil
 import subprocess
+import warnings
 
 try:
     from cv2.typing import MatLike
 except ImportError:
     MatLike = np.ndarray
+
+ModelManager = None
+HDStrategy = None
+LDMSampler = None
+Config = None
+
+
+def ensure_iopaint():
+    """Import IOPaint lazily so CLI help/preview don't fail on LaMA deps."""
+    global ModelManager, HDStrategy, LDMSampler, Config
+
+    if ModelManager is not None:
+        return ModelManager, HDStrategy, LDMSampler, Config
+
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=r".*torch\.cuda\.amp\.autocast.*",
+                category=FutureWarning,
+            )
+            from iopaint.model_manager import ModelManager as _ModelManager
+            from iopaint.schema import (
+                HDStrategy as _HDStrategy,
+                LDMSampler as _LDMSampler,
+                InpaintRequest as _Config,
+            )
+    except Exception as exc:
+        raise RuntimeError(
+            "Failed to import IOPaint. Run setup again, or repair the local "
+            "environment with: python\\python.exe -m pip install --upgrade "
+            "\"peft>=0.17.0\""
+        ) from exc
+
+    ModelManager = _ModelManager
+    HDStrategy = _HDStrategy
+    LDMSampler = _LDMSampler
+    Config = _Config
+    return ModelManager, HDStrategy, LDMSampler, Config
 
 
 def download_lama_model():
@@ -51,8 +89,10 @@ def download_lama_model():
 
 def load_lama_model(device):
     """Load LaMA model, downloading if necessary."""
+    model_manager_cls, _, _, _ = ensure_iopaint()
+
     try:
-        return ModelManager(name="lama", device=device)
+        return model_manager_cls(name="lama", device=device)
     except NotImplementedError as e:
         if "Unsupported model: lama" in str(e):
             print("LaMA model not available, attempting to download...")
@@ -62,7 +102,7 @@ def load_lama_model(device):
                 import iopaint.model
                 importlib.reload(iopaint.model)
                 # Try again
-                return ModelManager(name="lama", device=device)
+                return model_manager_cls(name="lama", device=device)
             else:
                 raise RuntimeError("Failed to download LaMA model. Please run manually: python\\python.exe -m iopaint download --model lama")
         raise
@@ -156,11 +196,12 @@ def detect_only(image: MatLike, model: Florence2ForConditionalGeneration, proces
 
     return results
 
-def process_image_with_lama(image: MatLike, mask: MatLike, model_manager: ModelManager):
-    config = Config(
+def process_image_with_lama(image: MatLike, mask: MatLike, model_manager):
+    _, hd_strategy_cls, ldm_sampler_cls, config_cls = ensure_iopaint()
+    config = config_cls(
         ldm_steps=50,
-        ldm_sampler=LDMSampler.ddim,
-        hd_strategy=HDStrategy.CROP,
+        ldm_sampler=ldm_sampler_cls.ddim,
+        hd_strategy=hd_strategy_cls.CROP,
         hd_strategy_crop_margin=64,
         hd_strategy_crop_trigger_size=800,
         hd_strategy_resize_limit=1600,
