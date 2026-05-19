@@ -1,5 +1,15 @@
 # WatermarkRemover-AI
+## About This Fork
 
+This repository is a modified and improved fork of **WatermarkRemover-AI**.
+
+I am currently working on improving the project, fixing bugs, resolving errors, and making the tool easier to install and use. This version is maintained by **@matalha786**.
+
+## Credits
+
+Full credit goes to the original developer of **WatermarkRemover-AI** for creating the main project, core idea, and original implementation. The original README credits the project as `D-Ogi/WatermarkRemover-AI`, and the project is licensed under the MIT License. :contentReference[oaicite:0]{index=0}
+
+My GitHub: `https://github.com/matalha786`
 **AI-Powered Watermark Removal Tool using Florence-2 and LaMA Models**
 
 🇬🇧 English | 🇫🇷 Français | 🇨🇳 中文 | 🇯🇵 日本語 | 🇧🇷 Português | 🧠 Brainrot
